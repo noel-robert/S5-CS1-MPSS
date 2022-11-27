@@ -1,3 +1,6 @@
+// Experiment No. 1
+// File Allocaton Methods
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +10,7 @@ struct file {
 	int startAddress;
 	int blockCount;
 	int assigned;	// 1->assigned, 0->not assigned
+	int indexBlockAddress;
 };
 struct block {
   int status; // 1->occupied, 0->unoccupied
@@ -18,8 +22,8 @@ void indexedAllocation();
 
 int main() { 
 	// contiguousAllocation(); 
-	linkedAllocation();
-  // indexedAllocation();
+	// linkedAllocation();
+  indexedAllocation();
 	return 0;
 }
 
@@ -119,9 +123,55 @@ void linkedAllocation() {
 	}
 }
 
-// void indexedAllocation() {
-	
-// }
+void indexedAllocation() {
+	int size = 32;		// memory size
+	struct block memory[size];
+	for(int i=0; i<size; i++) memory[i].status = 0;
+	int emptySpaces = size;		// all locations in memory are unoccupied at the moment
+ 
+	int n = 6;		// total no. of files
+	struct file files[n];
+
+	// input details
+	for(int i=0; i<n; i++) {
+		scanf("%s", files[i].name); scanf("%d", &files[i].blockCount);
+	}
+
+	// allocate files
+	// for each file, randomly choose a block to point to other blocks. then for that file, choose required number of blocks.
+	for(int i=0; i<n; i++) {
+		// check if there is enough space to store file
+		if(emptySpaces < (files[i].blockCount + 1)) {		// +1 coz 1 extra block for index block
+			files[i].assigned = 0;
+			continue;
+		}
+
+		// generate random address for index block
+		do {
+			files[i].indexBlockAddress = rand()%size;
+		} while(memory[files[i].indexBlockAddress].status != 0);
+		memory[files[i].indexBlockAddress].status = 1;
+
+		// allocate other blocks
+		int k = 0;
+		while(k < files[i].blockCount) {
+			int addr = rand()%size;
+			if(memory[addr].status == 0) { memory[addr].status = 1; } else { continue; }
+			k++;
+		}
+
+		files[i].assigned = 1;
+	}
+
+	// display
+	for(int i=0; i<n; i++) {
+		if(files[i].assigned == 1) {
+			printf("%s %d %d\t", files[i].name, files[i].indexBlockAddress, files[i].blockCount);
+		}	else {
+			printf("%s Cannot be stored\n", files[i].name);
+		}
+	}
+}
 
 /*
 test output
