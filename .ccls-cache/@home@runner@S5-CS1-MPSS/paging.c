@@ -32,6 +32,11 @@ int main() {
 	printf("Input page size (page size = frame size) - ");
 	scanf("%d", &pageSize);
 
+	if (logAd.offset >= pageSize) {
+		printf("Invalid offset value\n");
+		return 0;
+	}
+	
 	bool found = false;
 	int i;
 	for (i=0; i<pageTableSize; i++) {

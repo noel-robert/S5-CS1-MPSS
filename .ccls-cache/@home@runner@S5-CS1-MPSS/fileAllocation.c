@@ -84,21 +84,19 @@ void linkedAllocation() {
 
 	// input details
 	for(int i=0; i<n; i++) {
-		scanf("%s", files[i].name); scanf("%d", &files[i].startAddress); scanf("%d", &files[i].blockCount);
+		scanf("%s", files[i].name); scanf("%d", &files[i].blockCount);
 	}
  
 	int addressPathTable[n][size]; // to store paths
 	for(int i=0; i<n; i++) {
 		// check if there is enough space to store file
-		if((emptySpaces < files[i].blockCount) || (memory[files[i].startAddress].status != 0)) {
+		if(emptySpaces < files[i].blockCount) {
 			files[i].assigned = 0;
 			continue;
 		}
 		
-		// store in first block, then generate random addresses. check to make sure these are unoccupied
-		memory[files[i].startAddress].status = 1;	// setting start address
-		addressPathTable[i][0] = files[i].startAddress;
-		int k = 1;
+		// generate random addresses. check to make sure these are unoccupied
+		int k = 0;
 		while(k < files[i].blockCount) {
 			int addr = rand()%size;
 			if(memory[addr].status == 0) {
@@ -108,12 +106,13 @@ void linkedAllocation() {
 		}
 
 		files[i].assigned = 1;
+		emptySpaces--;
 	}
 
 	// display
 	for(int i=0; i<n; i++) {
 		if(files[i].assigned == 1) {
-			printf("%s %d %d\t", files[i].name, files[i].startAddress, files[i].blockCount);
+			printf("%s %d\t", files[i].name, files[i].blockCount);
 			int j;
 			for(j=0; j<files[i].blockCount-1; j++) printf("%d-", addressPathTable[i][j]);
 			printf("%d\n", addressPathTable[i][j]);
@@ -134,39 +133,41 @@ void indexedAllocation() {
 
 	// input details
 	for(int i=0; i<n; i++) {
-		scanf("%s", files[i].name); scanf("%d", &files[i].blockCount);
+		scanf("%s", files[i].name); scanf("%d", &files[i].indexBlockAddress); 
+		scanf("%d", &files[i].blockCount); memory[files[i].indexBlockAddress].status = 1;
 	}
 
+	int addressPathTable[n][size]; // to store paths
 	// allocate files
-	// for each file, randomly choose a block to point to other blocks. then for that file, choose required number of blocks.
 	for(int i=0; i<n; i++) {
 		// check if there is enough space to store file
-		if(emptySpaces < (files[i].blockCount + 1)) {		// +1 coz 1 extra block for index block
+		if(emptySpaces < files[i].blockCount) {		
+			// not enough space
 			files[i].assigned = 0;
 			continue;
 		}
-
-		// generate random address for index block
-		do {
-			files[i].indexBlockAddress = rand()%size;
-		} while(memory[files[i].indexBlockAddress].status != 0);
-		memory[files[i].indexBlockAddress].status = 1;
 
 		// allocate other blocks
 		int k = 0;
 		while(k < files[i].blockCount) {
 			int addr = rand()%size;
-			if(memory[addr].status == 0) { memory[addr].status = 1; } else { continue; }
+			if(memory[addr].status == 0) {
+				addressPathTable[i][k] = addr; memory[addr].status = 1;
+			} else { continue; }
 			k++;
 		}
 
 		files[i].assigned = 1;
+		emptySpaces--;
 	}
 
 	// display
 	for(int i=0; i<n; i++) {
 		if(files[i].assigned == 1) {
 			printf("%s %d %d\t", files[i].name, files[i].indexBlockAddress, files[i].blockCount);
+			int j;
+			for(j=0; j<files[i].blockCount-1; j++) printf("%d-", addressPathTable[i][j]);
+			printf("%d\n", addressPathTable[i][j]);
 		}	else {
 			printf("%s Cannot be stored\n", files[i].name);
 		}
