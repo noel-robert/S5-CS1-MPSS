@@ -98,7 +98,7 @@ int main() {
 		else if (strcmp(opcode, "BYTE") == 0) {	
 			int length = strlen(operand);
 			length -= 3;
-			if (operand[0] == 'X') { length /= 2; printf("%d", length); } 
+			if (operand[0] == 'X') { length /= 2; } 
 			else if (operand[0] == 'c') { /*NothingHappensToLength*/ }
 			else { /*NothingHappensHere*/ }
 			LOCCTR += length;
