@@ -64,7 +64,7 @@ int main() {
 		LOCCTR = startingAddress;
 		
 		intermediate_file = fopen("intermediate_file.txt", "a");
-		fprintf(intermediate_file, "%s\t%s\t%s\n", label, opcode, operand);
+		fprintf(intermediate_file, "\t\t%s\t\t%s\t\t%s\n", label, opcode, operand);
 		fclose(intermediate_file);
 
 		fscanf(input_file, "%s\t%s\t%s", label, opcode, operand);
@@ -76,7 +76,7 @@ int main() {
 	while (strcmp(opcode, "END") != 0) {
 		// write line to intermediate file
 		intermediate_file = fopen("intermediate_file.txt", "a");
-		fprintf(intermediate_file, "%x\t%s\t%s\t%s\n", LOCCTR, label, opcode, operand);
+		fprintf(intermediate_file, "%x\t\t%s\t\t%s\t\t%s\n", LOCCTR, label, opcode, operand);
 		fclose(intermediate_file);
 		
 		if (strcmp(label, "**") != 0) {	// if symbol in LABEL field
@@ -113,9 +113,10 @@ int main() {
 		fscanf(input_file, "%s\t%s\t%s", label, opcode, operand);
 	}
 
+	// LOCCTR = "**";
 	// write last line to intermediate file
 	intermediate_file = fopen("intermediate_file.txt", "a");
-	fprintf(intermediate_file, "\t%s\t%s\t%s", label, opcode, operand);
+	fprintf(intermediate_file, "%s\t\t%s\t\t%s\t\t%s", "**", label, opcode, operand);
 	fclose(intermediate_file);
 
 	// save locctr - starting address as program length
