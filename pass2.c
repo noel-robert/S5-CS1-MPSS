@@ -5,24 +5,34 @@
 #include <string.h>
 #include <stdbool.h>
 
-// checks if subField is a substring of mainField
-int substrcmp(char subString[25], char mainString[25]) {
-    int subStringLength = strlen(subString);
-    int mainStringLength = strlen(mainString);
 
-    if (subStringLength > mainStringLength) return 1;
 
-    int flag = 1;
-    for (int i=0; i<=(mainStringLength-subStringLength); i++) {
-        for (int j=i; j<i+subStringLength; j++) {
-            flag = 0;
-            if (mainString[j] != subString[j-i]) { flag = 1; break; }
-        }
-
-        if(flag == 0) break;
+// between `m` and `n` (excluding `n`)
+const char* extractFromBYTE(char src[25], int m, int n) {
+    int len = n - m;
+    char *dest = (char*)malloc(sizeof(char) * (len + 1));
+ 
+    for (int i = m; i < n && (*(src + i) != '\0'); i++) {
+        *dest = *(src + i);
+        dest++;
     }
+ 
+    // null-terminate the destination string
+    *dest = '\0';
+ 
+    return dest - len;
+}
 
-    return flag;
+const char* appendZeroes(char operand[25]) {
+    char *result = (char*)malloc(sizeof(char) * 5);
+    strcpy(result, operand);
+
+    char ch = '0';    
+    strrev(result);
+    while (strlen(result) < 4) strncat(result, &ch, 1);
+    strrev(result);
+
+    return result;
 }
 
 const char* searchSYMTAB(char searchValue[25]) {
@@ -34,12 +44,25 @@ const char* searchSYMTAB(char searchValue[25]) {
 	symtab_file = fopen("symtab.txt", "r");
 	while(!feof(symtab_file)) {
 		fscanf(symtab_file, "%s %s", label, address);
-		if (substrcmp(label, searchValue) == 0) {
+		if (strcmp(label, searchValue) == 0) {
 			fclose(symtab_file);
             strcpy(return_value, address);
 			return return_value;
 		}
 	}
+
+    // if not found, there is chance of BUFFER,X case
+    char *str1 = malloc(sizeof(char) * 8);
+    char *str2 = malloc(sizeof(char) * 8);
+    int i;
+    for (i=0; i<strlen(searchValue); i++) if (searchValue[i] == ',') break;
+    str1 = extractFromBYTE(searchValue, 0, i);
+    str2 = extractFromBYTE(searchValue, i+1, strlen(searchValue));
+
+    // not actually like this, also need to add X to this
+    if (strcmp(searchSYMTAB(str1), "false") != 0) return searchSYMTAB(str1);
+    else if (strcmp(searchSYMTAB(str2), "false") != 0) return searchSYMTAB(str2);
+
 	fclose(symtab_file);
 	return "false";
 }
@@ -62,6 +85,9 @@ const char* searchOPTAB(char searchValue[25]) {
 	fclose(optab_file);
 	return "false";
 }
+
+
+
 
 /*
 assembly listing - intermediate program with opcode
@@ -124,10 +150,13 @@ int main() {
                     // store 0 as operand address
                 }
                 
-            } else if (strcmp(opcode, "BYTE") == 0 || strcmp(opcode, "WORD") == 0) {
+            } else if (strcmp(opcode, "BYTE") == 0) {
                 // convert constant to object code
-                strcpy(machineCode_generated, operand);
-            }
+                strcpy(machineCode_generated, extractFromBYTE(operand, 2, 4));
+            } else if (strcmp(opcode, "WORD") == 0) {
+                /* TODO: add excess zeroes to opcode */
+                strcpy(machineCode_generated, appendZeroes(operand));
+            } 
 
 
         }
