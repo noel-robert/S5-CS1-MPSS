@@ -8,7 +8,7 @@
 
 
 // between `m` and `n` (excluding `n`)
-const char* extractFromBYTE(char src[25], int m, int n) {
+const char* extract(char src[25], int m, int n) {
     int len = n - m;
     char *dest = (char*)malloc(sizeof(char) * (len + 1));
  
@@ -23,14 +23,33 @@ const char* extractFromBYTE(char src[25], int m, int n) {
     return dest - len;
 }
 
+const char* stringrev(char source[25]) {
+    char *result = (char*)malloc(sizeof(char) * 5);
+    strcpy(result, source);
+
+    if (!result || ! *result) return result;
+
+    int i = 0, j = strlen(result) - 1;
+    char ch;
+
+    while (i < j) {
+        ch = result[i];
+        result[i] = result[j];
+        result[j] = ch;
+        i++, j--;
+    }
+
+    return result;
+}
+
 const char* appendZeroes(char operand[25]) {
     char *result = (char*)malloc(sizeof(char) * 5);
     strcpy(result, operand);
 
     char ch = '0';    
-    strrev(result);
+    stringrev(result);
     while (strlen(result) < 4) strncat(result, &ch, 1);
-    strrev(result);
+    stringrev(result);
 
     return result;
 }
@@ -56,8 +75,9 @@ const char* searchSYMTAB(char searchValue[25]) {
     char *str2 = malloc(sizeof(char) * 8);
     int i;
     for (i=0; i<strlen(searchValue); i++) if (searchValue[i] == ',') break;
-    str1 = extractFromBYTE(searchValue, 0, i);
-    str2 = extractFromBYTE(searchValue, i+1, strlen(searchValue));
+    strcpy(str1, extract(searchValue, 0, i));
+    strcpy(str2, extract(searchValue, i+1, strlen(searchValue)));
+
 
     // not actually like this, also need to add X to this
     if (strcmp(searchSYMTAB(str1), "false") != 0) return searchSYMTAB(str1);
@@ -152,7 +172,7 @@ int main() {
                 
             } else if (strcmp(opcode, "BYTE") == 0) {
                 // convert constant to object code
-                strcpy(machineCode_generated, extractFromBYTE(operand, 2, 4));
+                strcpy(machineCode_generated, extract(operand, 2, 4));
             } else if (strcmp(opcode, "WORD") == 0) {
                 /* TODO: add excess zeroes to opcode */
                 strcpy(machineCode_generated, appendZeroes(operand));
