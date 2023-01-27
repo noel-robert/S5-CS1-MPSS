@@ -86,9 +86,9 @@ void contiguousAllocation() {
 	}
 	
 	// display
-	printf("name startAddress blockCount\n");
+	printf("name\tstartAddress\tblockCount\n");
 	for(int i=0; i<n; i++) {
-		printf("%s	%d	%d     ", files[i].name, files[i].startAddress, files[i].blockCount);
+		printf("%s\t%d\t%d\t\t", files[i].name, files[i].startAddress, files[i].blockCount);
 		if(files[i].assigned == 1) {
 			int j;
 			for(j=files[i].startAddress; j<(files[i].startAddress+files[i].blockCount-1); j++) {
@@ -141,9 +141,9 @@ void linkedAllocation() {
 	}
 	
 	// display
-	printf("name blockCount addressList\n");
+	printf("name\tblockCount\taddressList\n");
 	for(int i=0; i<n; i++) {
-		printf("%s	%d     ", files[i].name, files[i].blockCount);
+		printf("%s\t%d\t\t", files[i].name, files[i].blockCount);
 		if(files[i].assigned == 1) {
 			int j;
 			for(j=0; j<files[i].blockCount-1; j++) {
@@ -201,9 +201,9 @@ void indexedAllocation() {
 	}
 	
 	// display
-	printf("name indexBlockAddress blockCount contentOfIndexBlock\n");
+	printf("name\tindexBlockAddress\tblockCount\tcontentOfIndexBlock\n");
 	for(int i=0; i<n; i++) {
-		printf("%s	%d	%d     ", files[i].name, files[i].indexBlockAddress, files[i].blockCount);
+		printf("%s\t%d\t%d\t\t", files[i].name, files[i].indexBlockAddress, files[i].blockCount);
 		if(files[i].assigned == 1) {
 			int j;
 			for(j=0; j<files[i].blockCount-1; j++) {
@@ -216,6 +216,7 @@ void indexedAllocation() {
 		}		
 	}
 }
+
 
 /*OUTPUT
 1. Contiguous Allocation 

@@ -48,7 +48,7 @@ const char* appendZeroes(char operand[25]) {
 
     char ch = '0';    
     stringrev(result);
-    while (strlen(result) < 4) strncat(result, &ch, 1);
+    while (strlen(result) < 6) strncat(result, &ch, 1);
     stringrev(result);
 
     return result;
