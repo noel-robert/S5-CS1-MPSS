@@ -6,55 +6,128 @@
 #include <string.h>
 #include <stdbool.h>
 
+// between `m` and `n` (excluding `n`)
+const char* extract(char src[25], int m, int n) {
+    int len = n - m;
+    char *dest = (char*)malloc(sizeof(char) * (len + 1));
+ 
+    for (int i = m; i < n && (*(src + i) != '\0'); i++) {
+        *dest = *(src + i);
+        dest++;
+    }
+ 
+    // null-terminate the destination string
+    *dest = '\0';
+ 
+    return dest - len;
+}
 
-bool searchSYMTAB(char searchValue[25]) {
+const char* stringrev(char source[25]) {
+    char *result = (char*)malloc(sizeof(char) * 5);
+    strcpy(result, source);
+
+    if (!result || ! *result) return result;
+
+    int i = 0, j = strlen(result) - 1;
+    char ch;
+
+    while (i < j) {
+        ch = result[i];
+        result[i] = result[j];
+        result[j] = ch;
+        i++, j--;
+    }
+
+    return result;
+}
+
+const char* appendZeroes(char operand[25]) {
+    char *result = (char*)malloc(sizeof(char) * 5);
+    strcpy(result, operand);
+
+    char ch = '0';    
+    stringrev(result);
+    while (strlen(result) < 6) strncat(result, &ch, 1);
+    stringrev(result);
+
+    return result;
+}
+
+const char* searchSYMTAB(char searchValue[25]) {
 	char label[25];
 	char address[25];
+    char *return_value = malloc(sizeof(char) * 25);
 	
 	FILE *symtab_file;
 	symtab_file = fopen("symtab.txt", "r");
 	while(!feof(symtab_file)) {
 		fscanf(symtab_file, "%s %s", label, address);
-		if (strcmp(searchValue, label) == 0) {
+		if (strcmp(label, searchValue) == 0) {
 			fclose(symtab_file);
-			return true;
+            strcpy(return_value, address);
+			return return_value;
 		}
 	}
+
+    
+    // if not found, there is chance of BUFFER,X case
+    char *str1 = malloc(sizeof(char) * 25);
+    char *str2 = malloc(sizeof(char) * 25);
+    int i;
+    for (i=0; i<strlen(searchValue); i++) {
+		if (searchValue[i] == ',') {
+			strcpy(str1, extract(searchValue, 0, i));
+			strcpy(str2, extract(searchValue, i+1, strlen(searchValue)));
+			// printf("%s, %s\n", str1, str2);
+
+
+			// not actually like this, also need to add X to this
+			if (strcmp(searchSYMTAB(str1), "false") != 0) return searchSYMTAB(str1);
+			else if (strcmp(searchSYMTAB(str2), "false") != 0) return searchSYMTAB(str2);
+
+			break;
+		}
+	}
+
 	fclose(symtab_file);
-	return false;
+	return "false";
 }
 
-bool searchOPTAB(char searchValue[25]) {
+const char* searchOPTAB(char searchValue[25]) {
 	char opcode[25];
-	char mnemonicCode[25];
+	char mnemonic_code[25];
+    char *return_value = malloc(sizeof(char) * 8);
 	
 	FILE *optab_file;
 	optab_file = fopen("optab.txt", "r");
 	while(!feof(optab_file)) {
-		fscanf(optab_file, "%s %s", opcode, mnemonicCode);
+		fscanf(optab_file, "%s %s", opcode, mnemonic_code);
 		if (strcmp(searchValue, opcode) == 0) {
 			fclose(optab_file);
-			return true;
+			strcpy(return_value, mnemonic_code);
+			return return_value;
 		}
 	}
 	fclose(optab_file);
-	return false;
+	return "false";
 }
 
 
 int main() {
-	FILE *input_file, *intermediate_file, *symtab_file;
+	FILE *input_file, *assembly_file, *symtab_file;
 
 	char label[25], opcode[25], operand[25];
+	char machineCode[25];
 	int startingAddress, LOCCTR;
 
-	// clears intermediate file and symtab on starting the program
-	intermediate_file = fopen("intermediate_file.txt", "w");
-	fprintf(intermediate_file, "%s", "");
-	fclose(intermediate_file);
+	// clears assembly_file file, symtab and length on starting the program
+	assembly_file = fopen("assembly_file.txt", "w");
+	fprintf(assembly_file, "%s", "");
+	fclose(assembly_file);
 	symtab_file = fopen("symtab.txt", "w");
 	fprintf(symtab_file, "%s", "");
 	fclose(symtab_file);
+
 	
 	input_file = fopen("input_file.txt", "r");
 	fscanf(input_file, "%s\t%s\t%s", label, opcode, operand);
@@ -63,9 +136,9 @@ int main() {
 		startingAddress = (int)strtol(operand, NULL, 16);
 		LOCCTR = startingAddress;
 		
-		intermediate_file = fopen("intermediate_file.txt", "a");
-		fprintf(intermediate_file, "\t\t%s\t\t%s\t\t%s\n", label, opcode, operand);
-		fclose(intermediate_file);
+		assembly_file = fopen("assembly_file.txt", "a");
+		fprintf(assembly_file, "%s\t\t%s\t\t%s\n", label, opcode, operand);
+		fclose(assembly_file);
 
 		fscanf(input_file, "%s\t%s\t%s", label, opcode, operand);
 	} else {
@@ -74,13 +147,17 @@ int main() {
 
 	
 	while (strcmp(opcode, "END") != 0) {
-		// write line to intermediate file
-		intermediate_file = fopen("intermediate_file.txt", "a");
-		fprintf(intermediate_file, "%x\t\t%s\t\t%s\t\t%s\n", LOCCTR, label, opcode, operand);
-		fclose(intermediate_file);
+		// write line to assembly_file
+		assembly_file = fopen("assembly_file.txt", "a");
+		fprintf(assembly_file, "%x\t\t%s\t\t%s\t\t%s", LOCCTR, label, opcode, operand);
+		fclose(assembly_file);
 		
+		// generate machine code, 
+		strcpy(machineCode, "");
+
+		// insert into symtab
 		if (strcmp(label, "**") != 0) {	// if symbol in LABEL field
-			if (searchSYMTAB(label)) {	// search SYMTAB for label
+			if (strcmp(searchSYMTAB(label), "false") != 0) {	// search SYMTAB for label
 				// set error flag
 			} else {
 				// insert to SYMTAB
@@ -91,11 +168,19 @@ int main() {
 		}
 
 		// search optab for opcode
-		if (searchOPTAB(opcode)) { LOCCTR += 3;	} 
-		else if (strcmp(opcode, "WORD") == 0) { LOCCTR += 3; }	
+		if (strcmp(searchOPTAB(opcode), "false") != 0) { 
+			strcat(machineCode, searchOPTAB(opcode));
+			LOCCTR += 3;  
+		} 
+		else if (strcmp(opcode, "WORD") == 0) { 
+			strcpy(machineCode, appendZeroes(operand));
+			LOCCTR += 3; 
+		}	
 		else if (strcmp(opcode, "RESW") == 0) {	LOCCTR += 3*atoi(operand); }
 		else if (strcmp(opcode, "RESB") == 0) {	LOCCTR += atoi(operand); }
 		else if (strcmp(opcode, "BYTE") == 0) {	
+			strcpy(machineCode, extract(operand, 2, 4));
+
 			int length = strlen(operand);
 			length -= 3;
 			if (operand[0] == 'X') { length /= 2; } 
@@ -104,20 +189,32 @@ int main() {
 			LOCCTR += length;
 		} else { /*Set error flag - invalid error code*/ }
 
-		// write line to intermediate file
-		// intermediate_file = fopen("intermediate_file.txt", "a");
-		// fprintf(intermediate_file, "%x %s %s %s\n", LOCCTR, label, opcode, operand);
-		// fclose(intermediate_file);
+
+		if (strcmp(opcode, "RESB") != 0 && strcmp(opcode, "RESW") != 0) {
+			// take from symtab
+			if (strcmp(searchSYMTAB(operand), "false") != 0) { strcat(machineCode, searchSYMTAB(operand)); }
+			else if (strcmp(opcode, "WORD") == 0 || strcmp(opcode, "BYTE") == 0) {}
+			else { strcat(machineCode, "----"); }
+
+			// write machine code to assembly_file
+			assembly_file = fopen("assembly_file.txt", "a");
+			fprintf(assembly_file, "\t\t%s\n", machineCode);
+			fclose(assembly_file);
+		} else {
+			assembly_file = fopen("assembly_file.txt", "a");
+			fprintf(assembly_file, "\n");
+			fclose(assembly_file);
+		}
 
 		// read next input line
 		fscanf(input_file, "%s\t%s\t%s", label, opcode, operand);
 	}
 
 	// LOCCTR = "**";
-	// write last line to intermediate file
-	intermediate_file = fopen("intermediate_file.txt", "a");
-	fprintf(intermediate_file, "%s\t\t%s\t\t%s\t\t%s", "**", label, opcode, operand);
-	fclose(intermediate_file);
+	// write last line to assembly_file file
+	assembly_file = fopen("assembly_file.txt", "a");
+	fprintf(assembly_file, "%s\t\t%s\t\t%s\t\t%s", "**", label, opcode, operand);
+	fclose(assembly_file);
 
 	// save locctr - starting address as program length
 	FILE *progLength;

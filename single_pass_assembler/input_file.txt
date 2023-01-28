@@ -1,5 +1,5 @@
-BUFTOREC     START        3000
-OUTPUT       BYTE         X'05'   
+BUFTOREC    START        3000
+OUTPUT       BYTE         X'05'
 ZERO         WORD         0
 BUFFER       RESB         4096
 LENGTH       RESW         1
