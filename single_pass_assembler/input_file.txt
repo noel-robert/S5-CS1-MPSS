@@ -1,4 +1,4 @@
-BUFTOREC    START        3000
+BUFTOREC    START   3000
 WRREC        LDX          ZERO
 WLOOP        TD           OUTPUT
  **          JEQ          WLOOP

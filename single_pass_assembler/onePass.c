@@ -7,11 +7,10 @@
 #include <stdbool.h>
 
 
-struct node {
-	char data[25];	// store opcode or address
-
-	struct node link;
-};
+// struct node {
+// 	char data[25];	// store opcode or address
+// 	struct node link;
+// };
 
 // between `m` and `n` (excluding `n`)
 const char* extract(char src[25], int m, int n) {
@@ -82,7 +81,7 @@ const char* searchSYMTAB(char searchValue[25]) {
     char *str1 = malloc(sizeof(char) * 25);
     char *str2 = malloc(sizeof(char) * 25);
     int i;
-    for (i=0; i<strlen(searchValue); i++) {
+    for (i=0; i<(int)strlen(searchValue); i++) {
 		if (searchValue[i] == ',') {
 			strcpy(str1, extract(searchValue, 0, i));
 			strcpy(str2, extract(searchValue, i+1, strlen(searchValue)));

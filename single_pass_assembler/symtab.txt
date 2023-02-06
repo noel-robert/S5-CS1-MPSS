@@ -1,7 +1,6 @@
 WRREC	3000
-ZERO	----
+ZERO	null
 WLOOP	3003
-OUTPUT	----
-BUFFER,X	----
-LENGTH	----
-BUFFER	3019
+OUTPUT	null
+BUFFER,X	null
+LENGTH	null

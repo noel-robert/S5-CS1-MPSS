@@ -8,11 +8,11 @@
 #include <stdbool.h>
 
 
-struct node {
-	char data[25];	// store opcode or address
+// struct node {
+// 	char data[25];	// store opcode or address
 
-	struct node link;
-};
+// 	struct node link;
+// };
 
 // between `m` and `n` (excluding `n`)
 const char* extract(char src[25], int m, int n) {
@@ -83,7 +83,7 @@ const char* searchSYMTAB(char searchValue[25]) {
     char *str1 = malloc(sizeof(char) * 25);
     char *str2 = malloc(sizeof(char) * 25);
     int i;
-    for (i=0; i<strlen(searchValue); i++) {
+    for (i=0; i<(int)strlen(searchValue); i++) {
 		if (searchValue[i] == ',') {
 			strcpy(str1, extract(searchValue, 0, i));
 			strcpy(str2, extract(searchValue, i+1, strlen(searchValue)));
@@ -128,6 +128,7 @@ int main() {
 	char label[25], opcode[25], operand[25];
 	char machineCode[25];
 	int startingAddress, LOCCTR;
+	int offset = -1;
 
 	// clears assembly_file file, symtab and length on starting the program
 	assembly_file = fopen("assembly_file.txt", "w");
@@ -136,7 +137,6 @@ int main() {
 	symtab_file = fopen("symtab.txt", "w");
 	fprintf(symtab_file, "%s", "");
 	fclose(symtab_file);
-
 	
 	input_file = fopen("input_file.txt", "r");
 	fscanf(input_file, "%s\t%s\t%s", label, opcode, operand);
@@ -147,6 +147,7 @@ int main() {
 		
 		assembly_file = fopen("assembly_file.txt", "a");
 		fprintf(assembly_file, "%s\t\t%s\t\t%s\n", label, opcode, operand);
+		offset += strlen(label) + 1 + strlen(opcode) + 1 + strlen(operand);
 		fclose(assembly_file);
 
 		fscanf(input_file, "%s\t%s\t%s", label, opcode, operand);
@@ -159,6 +160,7 @@ int main() {
 		// write line to assembly_file
 		assembly_file = fopen("assembly_file.txt", "a");
 		fprintf(assembly_file, "%x\t\t%s\t\t%s\t\t%s", LOCCTR, label, opcode, operand);
+		offset += 4 + 1 + strlen(label) + 1 + strlen(opcode) + 1 + strlen(operand);
 		fclose(assembly_file);
 		
 		// set machine code string to null
@@ -167,17 +169,10 @@ int main() {
 		// insert into symtab
 		if (strcmp(label, "**") != 0) {	// if symbol in LABEL field
 			if (strcmp(searchSYMTAB(label), "false") != 0) {	// search SYMTAB for label
-				/*TODO: if label is in symtab, but address is ****, 
-				then we need to update address with locctr we get here*/
-				/* how??
-				1. open as read and set something like offset to 0. offset counts offset value for fseek()
-				2. when label occurred, add 1 (for space, check if length of lable needs to be added) to offset
-				3. there, use fseek to insert
-				*/
-
-				/*if label is in symtab, and address is not ***** then set error flag {duplicate symbol}*/
+				if (strcmp(searchSYMTAB(label), "null") != 0) {
+					// set symbol value as locctr - need to edit ll 
+				}
 			} else {
-				// insert to SYMTAB, as value not present already
 				symtab_file = fopen("symtab.txt", "a");
 				fprintf(symtab_file, "%s\t%x\n", label, LOCCTR);
 				fclose(symtab_file);
@@ -185,10 +180,42 @@ int main() {
 		}
 
 		// search optab for opcode
+		// if (strcmp(searchOPTAB(opcode), "false") != 0) { 
+		// 	strcat(machineCode, searchOPTAB(opcode));
+		// 	LOCCTR += 3;  
+		// } 
+		// else if (strcmp(opcode, "WORD") == 0) { 
+		// 	strcpy(machineCode, appendZeroes(operand));
+		// 	LOCCTR += 3; 
+		// }	
+		// else if (strcmp(opcode, "RESW") == 0) {	LOCCTR += 3*atoi(operand); }
+		// else if (strcmp(opcode, "RESB") == 0) {	LOCCTR += atoi(operand); }
+		// else if (strcmp(opcode, "BYTE") == 0) {	
+		// 	strcpy(machineCode, extract(operand, 2, 4));
+
+		// 	int length = strlen(operand);
+		// 	length -= 3;
+		// 	if (operand[0] == 'X') { length /= 2; } 
+		// 	else if (operand[0] == 'c') { /*NothingHappensToLength*/ }
+		// 	else { /*NothingHappensHere*/ }
+		// 	LOCCTR += length;
+		// } else { /*Set error flag - invalid error code*/ }
+
 		if (strcmp(searchOPTAB(opcode), "false") != 0) { 
 			strcat(machineCode, searchOPTAB(opcode));
+			if (strcmp(searchSYMTAB(operand), "false") != 0) {
+				if (strcmp(searchSYMTAB(operand), "null") != 0) {
+					// TODO: store symbol value as operand address
+				} else {
+					// TODO: insert at end of ll
+				}
+			} else {
+				symtab_file = fopen("symtab.txt", "a");
+				fprintf(symtab_file, "%s\t%x\n", label, "null");
+				fclose(symtab_file);
+			}
 			LOCCTR += 3;  
-		} 
+		}
 		else if (strcmp(opcode, "WORD") == 0) { 
 			strcpy(machineCode, appendZeroes(operand));
 			LOCCTR += 3; 
@@ -214,15 +241,15 @@ int main() {
 			else { 
 				strcat(machineCode, "----");
 
-				/* TODO: add to symtab operand, ----*/
-				symtab_file = fopen("symtab.txt", "a");
-				fprintf(symtab_file, "%s\t%s\n", operand, "----");
-				fclose(symtab_file);
+				// symtab_file = fopen("symtab.txt", "a");
+				// fprintf(symtab_file, "%s\t%s\n", operand, "----");
+				// fclose(symtab_file);
 			}
 
 			// write machine code to assembly_file
 			assembly_file = fopen("assembly_file.txt", "a");
 			fprintf(assembly_file, "\t\t%s\n", machineCode);
+			offset += 1 + strlen(machineCode);
 			fclose(assembly_file);
 		} else {
 			assembly_file = fopen("assembly_file.txt", "a");
@@ -247,4 +274,7 @@ int main() {
 	fclose(progLength);
 	
 	fclose(input_file);
+
+	printf("Length - %d", offset);
+	return 0;
 }

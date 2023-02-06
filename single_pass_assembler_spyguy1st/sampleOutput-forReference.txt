@@ -1,0 +1,35 @@
+# input 
+BUFTOREC     START        3000
+OUTPUT       BYTE         X'05'   
+ZERO         WORD         0
+BUFFER       RESB         4096
+LENGTH       RESW         1
+WRREC        LDX          ZERO
+WLOOP        TD           OUTPUT
+ **          JEQ          WLOOP
+ **          LDCH         BUFFER
+ **          WD           OUTPUT
+ **          TIX          OHNO
+OHNO         JLT          WLOOP
+ **	     		 END          WRREC
+
+
+# intermediate
+BUFTOREC      START       3000
+3000		OUTPUT		BYTE		X'05'		05
+3001		ZERO		WORD		0		000000
+3004		BUFFER		RESB		4096		
+4004		LENGTH		RESW		1		
+4007		WRREC		LDX		ZERO		043001
+400A		WLOOP		TD		OUTPUT		E03000
+400D		**		JEQ		WLOOP		30400A
+4010		**		LDCH		BUFFER		503004
+4013		**		WD		OUTPUT		DC3000
+4016		**		TIX		OHNO		2C4019
+4019		OHNO		JLT		WLOOP		38400A
+
+
+# record
+H^BUFTOREC^3000^101c
+T^3000^101c^05^000000^043001^E03000^30400A^503004^DC3000^2C4019^38400A^
+E^3000
