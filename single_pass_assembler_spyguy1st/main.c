@@ -6,22 +6,6 @@
 #include <string.h>
 
 
-// char symtab_addr[10];
-// int searchStrSym(char operand[10]) {
-//   FILE *symtab_file;
-//   char symtab_label[10];
-//   symtab_file = fopen("symtab.txt", "r");
-//   while (!feof(symtab_file)) {
-//     fscanf(symtab_file, "%s %s", symtab_label, symtab_addr);
-//     if (strstr(operand, symtab_label) == 0) {
-//       fclose(symtab_file);
-//       return 0;
-//     }
-//   }
-//   fclose(symtab_file);
-//   return 1;
-// }
-
 const char* stringrev(char source[10]) {
 	char *result = (char*) malloc(sizeof(char) * 7);
 	strcpy(result, source);
@@ -117,18 +101,18 @@ const char* searchOPTAB(char searchValue[25]) {
 }
 
 int main() {
-  FILE *input_file, *record_file, *symtab_file, *optab_file, *intermediate_file;
+  FILE *input_file, *record_file, *symtab_file, *optab_file, *output_file;
 
   input_file = fopen("input.txt", "r");
   record_file = fopen("record.txt", "w");
-  intermediate_file = fopen("intermediate.txt", "w");
+  output_file = fopen("output.txt", "w");
 
   symtab_file = fopen("symtab.txt", "w");
   fclose(symtab_file);
 
   char label[10], opcode[10], operand[10], progName[10];
   char optab_opcode[10], optab_mnemonic[10], symtab_label[10], symtab_addr[10];
-  int record_file_offset, intermediate_file_offset;
+  int record_file_offset, output_file_offset;
   int LOCCTR, startAddress, is_operand_in_symtab;
 
 
@@ -140,7 +124,7 @@ int main() {
 
     fprintf(record_file, "H^%s^%X^****\n", label, startAddress);
     fprintf(record_file, "T^%X^****^", startAddress);
-    fprintf(intermediate_file, "%s\t\t%s\t\t%X\n", label, opcode, startAddress);
+    fprintf(output_file, "%s\t\t%s\t\t%X\n", label, opcode, startAddress);
     strcpy(progName, label);
     // printf("%s conversion started", progName);
 
@@ -151,7 +135,7 @@ int main() {
 
 
   while (strcmp(opcode, "END") != 0) {
-    fprintf(intermediate_file, "%X\t\t%s\t\t%s\t\t%s\t\t", LOCCTR, label, opcode, operand);
+    fprintf(output_file, "%X\t\t%s\t\t%s\t\t%s\t\t", LOCCTR, label, opcode, operand);
 
     if (strcmp(label, "**") != 0) {
       // int flag1 = 0;
@@ -162,23 +146,19 @@ int main() {
         if (strcmp(symtab_label, label) == 0) {
           // if address in symtab is null, edit it
           if (strcmp(symtab_addr, "----") == 0) {
-            int retAddr = ftell(intermediate_file);
+            int retAddr = ftell(output_file);
 
-            fscanf(symtab_file, "%d %d", &record_file_offset, &intermediate_file_offset);
+            fscanf(symtab_file, "%d %d", &record_file_offset, &output_file_offset);
             fseek(record_file, record_file_offset, SEEK_SET);
-            fseek(intermediate_file, intermediate_file_offset, SEEK_SET);
+            fseek(output_file, output_file_offset, SEEK_SET);
             fprintf(record_file, "%X^", LOCCTR);
-            fprintf(intermediate_file, "%X", LOCCTR);
+            fprintf(output_file, "%X", LOCCTR);
 
-            fseek(intermediate_file, retAddr, SEEK_SET);
+            fseek(output_file, retAddr, SEEK_SET);
           } else { fprintf(symtab_file, "%s\t\t%X\n", label, LOCCTR); }
         }
       }
 
-      // if (flag1 == 0) {
-      //   // printf("%s\t\t%X\n", label, LOCCTR);
-      //   fprintf(symtab_file, "%s\t\t%X\n", label, LOCCTR);
-      // }
       fprintf(symtab_file, "%s\t\t%X\n", label, LOCCTR);
       fclose(symtab_file);
     }
@@ -189,52 +169,26 @@ int main() {
     if(strcmp(optab_mnemonic, "false") != 0) {
       is_opcode_in_optab = 1;
       fprintf(record_file, "%s", optab_mnemonic);
-      fprintf(intermediate_file, "%s", optab_mnemonic);
+      fprintf(output_file, "%s", optab_mnemonic);
     }
     
 
     if (is_opcode_in_optab == 1) {
       is_operand_in_symtab = 0;
       symtab_file = fopen("symtab.txt", "r");
-      // while (!feof(symtab_file)) {
-      //   fscanf(symtab_file, "%s %s \n", symtab_label, symtab_addr);
-      //   if (strcmp(symtab_label, operand) == 0) {
-      //     is_operand_in_symtab = 1;
-      //     fprintf(record_file, "%s^", symtab_addr);
-      //     fprintf(intermediate_file, "%s", symtab_addr);
-      //   }
-      //   else {
-      //     char copy[10];
-      //     for (int i = 0; i < strlen(operand); i++) {
-      //       printf("%d ", i);
-      //       if (operand[i] == ',') { 
-      //         is_operand_in_symtab = 1;
-      //         int j = 0;
-      //         int k = 0;
-      //         while (j < i) copy[k++] = operand[j++];
-
-      //         if (strcmp(symtab_label, copy) == 0) {
-      //           fprintf(record_file, "%s^", symtab_addr);
-      //           fprintf(intermediate_file, "%s", symtab_addr);
-      //         }
-      //         break;
-      //       }
-      //     }            
-      //   }
-      // }
+      
       strcpy(symtab_addr, searchSYMTAB(operand));
       if(strcmp(symtab_addr, "false") != 0) {
         is_operand_in_symtab = 1;
         fprintf(record_file, "%s^", symtab_addr);
-        fprintf(intermediate_file, "%s", symtab_addr);
+        fprintf(output_file, "%s", symtab_addr);
       }
-      // fclose(symtab_file);
 
       if (is_operand_in_symtab == 0) {
-        fprintf(intermediate_file, "----");
+        fprintf(output_file, "----");
         fprintf(record_file, "----^");
         symtab_file = fopen("symtab.txt", "a");
-        fprintf(symtab_file, "%s\t\t----\t%ld %ld\n", operand, ftell(record_file) - 5, ftell(intermediate_file) - 4); // setting record_file and intermediate_file offset values
+        fprintf(symtab_file, "%s\t\t----\t%ld %ld\n", operand, ftell(record_file) - 5, ftell(output_file) - 4); // setting record_file and output_file offset values
         fclose(symtab_file);
       }
     }
@@ -242,7 +196,7 @@ int main() {
     if (is_opcode_in_optab == 1) { LOCCTR = LOCCTR + 3; }
     else if (strcmp(opcode, "WORD") == 0) {
       fprintf(record_file, "%s^", appendZero(operand));
-      fprintf(intermediate_file, "%s", appendZero(operand));
+      fprintf(output_file, "%s", appendZero(operand));
       LOCCTR = LOCCTR + 3;
     }
     else if (strcmp(opcode, "RESW") == 0) { LOCCTR = 3 * atoi(operand) + LOCCTR; }
@@ -250,7 +204,7 @@ int main() {
     else if (strcmp(opcode, "BYTE") == 0)
     {
       fprintf(record_file, "%s^", extract(operand, 2, 4));
-      fprintf(intermediate_file, "%s", extract(operand, 2, 4));
+      fprintf(output_file, "%s", extract(operand, 2, 4));
 
       int length = strlen(operand);
 			length -= 3;
@@ -261,11 +215,11 @@ int main() {
     }
     else { /*Invalid operation code - program should not reach this condition*/ }
 
-    fprintf(intermediate_file, "\n");
+    fprintf(output_file, "\n");
     fscanf(input_file, "%s %s %s", label, opcode, operand);
   } 
-  fprintf(intermediate_file, "**\t\t%s\t\t%s\t\t%s\t\t", label, opcode, operand);
-  fclose(intermediate_file);
+  fprintf(output_file, "**\t\t%s\t\t%s\t\t%s\t\t", label, opcode, operand);
+  fclose(output_file);
   fprintf(record_file, "\nE^%X", startAddress);
   fclose(record_file);
 
@@ -278,55 +232,38 @@ int main() {
 
   record_file = fopen("record.txt", "r+");
   char str[150];
-  int len;
+  int p;
  
+
   while(fgets(str, 150, record_file) != NULL) {
-    // printf("%s", str);
     if (str[0] == 'H') {
-      
-    } 
-    else if (str[0] == 'T') {printf("text ");}
-    else {printf("end ");}
-    // if (str[0] != 'E') { 
-    //   int i;
-    //   for (i=0; str[i]!='\n'&&str[i]!='\0'; i++) { 
-    //     if (str[i] == '*') { 
-    //       int retPos = ftell(record_file);
-    //       fseek(record_file, len+i, SEEK_SET);
-    //       fputs(progLength, record_file);
-    //       fseek(record_file, retPos, SEEK_SET);
-    //       len += strlen(str)+1;
-    //     } 
-    //   } 
-    // }
+      for(int i=0; str[i]!='\n'&&str[i]!='\0'; i++) {
+        if (str[i] == '*') {
+          int retPos = ftell(record_file);
+          fseek(record_file, i, SEEK_SET);
+          fprintf(record_file, "%s", progLength);
+          fseek(record_file, retPos, SEEK_SET);
+
+          p = strlen(str);
+          break;
+        }
+      }
+    } else if (str[0] == 'T') {
+      for(int i=0; str[i]!='\n'&&str[i]!='\0'; i++) {
+        if (str[i] == '*') {
+          int retPos = ftell(record_file);
+          fseek(record_file, i+p+1, SEEK_SET);
+          fprintf(record_file, "%s", progLength);
+          fseek(record_file, retPos, SEEK_SET);
+
+          p += strlen(str);
+          break;
+        }
+      }
+    }  
   }
 
   fclose(input_file);
   fclose(record_file);
-  // printf("\n");
-
-  // printf("\nProgram Length = %X\n", length);
-
-  // FILE *fp2 = fopen("record.txt", "r+");
-  // char rep;
-  // int l = -1;
-  // while (1) {
-  //   rep = fgetc(fp2);
-  //   l++;
-  //   if (feof(fp2))
-  //     break;
-  //   // printf("%c ", rep);
-  //   if (rep == '*') {
-  //     fseek(fp2, l, SEEK_SET);
-  //     printf("replace ");
-  //     fprintf(fp2, "%X", length);
-  //     fseek(fp2, l + 1, SEEK_SET);
-  //   }
-  // }
-
-  // fclose(input_file);
-  // fclose(record_file);
-  // // fclose(fp3);
-  // printf("\n");
-  // // fclose(fp5);
+ 
 }

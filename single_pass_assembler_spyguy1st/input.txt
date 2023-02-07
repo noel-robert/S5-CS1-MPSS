@@ -10,4 +10,4 @@ WLOOP        TD           OUTPUT
  **          JLT          WLOOP
 BUFFER       RESB         4096
 LENGTH       RESW         1
- **	     		 END          WRREC
+ **	         END          BUFTOREC
