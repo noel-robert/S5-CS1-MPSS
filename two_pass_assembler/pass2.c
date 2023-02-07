@@ -54,36 +54,34 @@ const char* appendZeroes(char operand[25]) {
     return result;
 }
 
-const char* searchSYMTAB(char searchValue[25]) {
-	char label[25];
-	char address[25];
-    char *return_value = malloc(sizeof(char) * 8);
-	
-	FILE *symtab_file;
-	symtab_file = fopen("symtab.txt", "r");
-	while(!feof(symtab_file)) {
-		fscanf(symtab_file, "%s %s", label, address);
-		if (strcmp(label, searchValue) == 0) {
-			fclose(symtab_file);
-            strcpy(return_value, address);
-			return return_value;
-		}
+const char* searchSYMTAB (char searchValue[10]) {
+	FILE *symtab;
+	symtab = fopen("symtab.txt", "r");
+	char label[10], locctr[10];
+	char *returnValue = malloc(sizeof(char) * 8);
+
+	while(!feof(symtab)) {
+		fscanf(symtab, "%s %s", label, locctr);
+		if(strcmp(label, searchValue) == 0) { fclose(symtab); strcpy(returnValue, locctr); return returnValue; }
 	}
-
-    // if not found, there is chance of BUFFER,X case
-    char *str1 = malloc(sizeof(char) * 8);
-    char *str2 = malloc(sizeof(char) * 8);
-    int i;
-    for (i=0; i<strlen(searchValue); i++) if (searchValue[i] == ',') break;
-    strcpy(str1, extract(searchValue, 0, i));
-    strcpy(str2, extract(searchValue, i+1, strlen(searchValue)));
-
-
-    // not actually like this, also need to add X to this
-    if (strcmp(searchSYMTAB(str1), "false") != 0) return searchSYMTAB(str1);
-    else if (strcmp(searchSYMTAB(str2), "false") != 0) return searchSYMTAB(str2);
-
-	fclose(symtab_file);
+	
+	char *str1 = malloc(sizeof(char) * 8);
+	char *str2 = malloc(sizeof(char) * 8);
+	int i;
+	for (i=0; i<strlen(searchValue); i++) {
+		if(searchValue[i] == ',') {
+			strcpy(str1, extract(searchValue, 0, i));
+			strcpy(str2, extract(searchValue, i+1, strlen(searchValue)));
+	
+			if (strcmp(searchSYMTAB(str1), "false") != 0) return searchSYMTAB(str1);
+			else if (strcmp(searchSYMTAB(str2), "false") != 0) return searchSYMTAB(str2);
+			
+			break;
+		}
+		
+	}
+	
+	fclose(symtab); 
 	return "false";
 }
 

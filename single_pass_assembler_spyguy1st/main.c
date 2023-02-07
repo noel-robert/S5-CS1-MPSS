@@ -66,6 +66,56 @@ const char* extract (char src[10], int m, int n) {
 	return dest-len;
 }
 
+const char* searchSYMTAB (char searchValue[10]) {
+	FILE *symtab;
+	symtab = fopen("symtab.txt", "r");
+	char label[10], locctr[10];
+	char *returnValue = malloc(sizeof(char) * 8);
+
+	while(!feof(symtab)) {
+		fscanf(symtab, "%s %s", label, locctr);
+		if(strcmp(label, searchValue) == 0) { fclose(symtab); strcpy(returnValue, locctr); return returnValue; }
+	}
+	
+	char *str1 = malloc(sizeof(char) * 8);
+	char *str2 = malloc(sizeof(char) * 8);
+	int i;
+	for (i=0; i<strlen(searchValue); i++) {
+		if(searchValue[i] == ',') {
+			strcpy(str1, extract(searchValue, 0, i));
+			strcpy(str2, extract(searchValue, i+1, strlen(searchValue)));
+	
+			if (strcmp(searchSYMTAB(str1), "false") != 0) return searchSYMTAB(str1);
+			else if (strcmp(searchSYMTAB(str2), "false") != 0) return searchSYMTAB(str2);
+			
+			break;
+		}
+		
+	}
+	
+	fclose(symtab); 
+	return "false";
+}
+
+const char* searchOPTAB(char searchValue[25]) {
+	char opcode[25];
+	char mnemonic_code[25];
+  char *return_value = malloc(sizeof(char) * 8);
+	
+	FILE *optab_file;
+	optab_file = fopen("optab.txt", "r");
+	while(!feof(optab_file)) {
+		fscanf(optab_file, "%s %s", opcode, mnemonic_code);
+		if (strcmp(searchValue, opcode) == 0) {
+			fclose(optab_file);
+			strcpy(return_value, mnemonic_code);
+			return return_value;
+		}
+	}
+	fclose(optab_file);
+	return "false";
+}
+
 int main() {
   FILE *input_file, *record_file, *symtab_file, *optab_file, *intermediate_file;
 
@@ -133,55 +183,58 @@ int main() {
       fclose(symtab_file);
     }
 
-    
+    // search optab for opcode
     int is_opcode_in_optab = 0;
-    optab_file = fopen("optab.txt", "r");
-    while (!feof(optab_file))
-    {
-      fscanf(optab_file, "%s %s", optab_opcode, optab_mnemonic);
-      if (strcmp(optab_opcode, opcode) == 0) {
-        is_opcode_in_optab = 1;
-        fprintf(record_file, "%s", optab_mnemonic);
-        fprintf(intermediate_file, "%s", optab_mnemonic);
-      }
+    strcpy(optab_mnemonic, searchOPTAB(opcode));
+    if(strcmp(optab_mnemonic, "false") != 0) {
+      is_opcode_in_optab = 1;
+      fprintf(record_file, "%s", optab_mnemonic);
+      fprintf(intermediate_file, "%s", optab_mnemonic);
     }
-    fclose(optab_file);
+    
 
     if (is_opcode_in_optab == 1) {
       is_operand_in_symtab = 0;
       symtab_file = fopen("symtab.txt", "r");
-      while (!feof(symtab_file)) {
-        fscanf(symtab_file, "%s %s \n", symtab_label, symtab_addr);
-        if (strcmp(symtab_label, operand) == 0) {
-          is_operand_in_symtab = 1;
-          fprintf(record_file, "%s^", symtab_addr);
-          fprintf(intermediate_file, "%s", symtab_addr);
-        }
-        else {
-          char cop[10];
-          for (int i = 0; i < strlen(operand); i++) {
-            if (operand[i] == ',') { 
-              is_operand_in_symtab = 1;
-              int j = 0;
-              int k = 0;
-              while (j < i) cop[k++] = operand[j++];
+      // while (!feof(symtab_file)) {
+      //   fscanf(symtab_file, "%s %s \n", symtab_label, symtab_addr);
+      //   if (strcmp(symtab_label, operand) == 0) {
+      //     is_operand_in_symtab = 1;
+      //     fprintf(record_file, "%s^", symtab_addr);
+      //     fprintf(intermediate_file, "%s", symtab_addr);
+      //   }
+      //   else {
+      //     char copy[10];
+      //     for (int i = 0; i < strlen(operand); i++) {
+      //       printf("%d ", i);
+      //       if (operand[i] == ',') { 
+      //         is_operand_in_symtab = 1;
+      //         int j = 0;
+      //         int k = 0;
+      //         while (j < i) copy[k++] = operand[j++];
 
-              if (strcmp(symtab_label, cop) == 0) {
-                printf("yo");
-                fprintf(record_file, "%s^", symtab_addr);
-                fprintf(intermediate_file, "%s", symtab_addr);
-              }
-              break;
-            }
-          }            
-        }
+      //         if (strcmp(symtab_label, copy) == 0) {
+      //           fprintf(record_file, "%s^", symtab_addr);
+      //           fprintf(intermediate_file, "%s", symtab_addr);
+      //         }
+      //         break;
+      //       }
+      //     }            
+      //   }
+      // }
+      strcpy(symtab_addr, searchSYMTAB(operand));
+      if(strcmp(symtab_addr, "false") != 0) {
+        is_operand_in_symtab = 1;
+        fprintf(record_file, "%s^", symtab_addr);
+        fprintf(intermediate_file, "%s", symtab_addr);
       }
-      fclose(symtab_file);
+      // fclose(symtab_file);
+
       if (is_operand_in_symtab == 0) {
         fprintf(intermediate_file, "----");
         fprintf(record_file, "----^");
         symtab_file = fopen("symtab.txt", "a");
-        fprintf(symtab_file, "%s\t\t----\t%ld %ld\n", operand, ftell(record_file) - 5, ftell(intermediate_file) - 4);
+        fprintf(symtab_file, "%s\t\t----\t%ld %ld\n", operand, ftell(record_file) - 5, ftell(intermediate_file) - 4); // setting record_file and intermediate_file offset values
         fclose(symtab_file);
       }
     }
@@ -221,25 +274,59 @@ int main() {
   int length = LOCCTR - startAddress;
   char progLength[10];
   itoa(length, progLength, 16);
+  // printf("%s", progLength);
 
   record_file = fopen("record.txt", "r+");
   char str[150];
   int len;
  
   while(fgets(str, 150, record_file) != NULL) {
-    if (str[0] != 'E') {
-      int i;
-      for (i=0; str[i]!='\n'&&str[i]!='\0'; i++) if (str[i] == '*') { break; }
-      int retPos = ftell(record_file);
-      fseek(record_file, len+i, SEEK_SET);
-      fputs(progLength, record_file);
-      fseek(record_file, retPos, SEEK_SET);
-      len += strlen(str)+1;
-      continue;
-    }
+    // printf("%s", str);
+    if (str[0] == 'H') {
+      
+    } 
+    else if (str[0] == 'T') {printf("text ");}
+    else {printf("end ");}
+    // if (str[0] != 'E') { 
+    //   int i;
+    //   for (i=0; str[i]!='\n'&&str[i]!='\0'; i++) { 
+    //     if (str[i] == '*') { 
+    //       int retPos = ftell(record_file);
+    //       fseek(record_file, len+i, SEEK_SET);
+    //       fputs(progLength, record_file);
+    //       fseek(record_file, retPos, SEEK_SET);
+    //       len += strlen(str)+1;
+    //     } 
+    //   } 
+    // }
   }
 
   fclose(input_file);
   fclose(record_file);
   // printf("\n");
+
+  // printf("\nProgram Length = %X\n", length);
+
+  // FILE *fp2 = fopen("record.txt", "r+");
+  // char rep;
+  // int l = -1;
+  // while (1) {
+  //   rep = fgetc(fp2);
+  //   l++;
+  //   if (feof(fp2))
+  //     break;
+  //   // printf("%c ", rep);
+  //   if (rep == '*') {
+  //     fseek(fp2, l, SEEK_SET);
+  //     printf("replace ");
+  //     fprintf(fp2, "%X", length);
+  //     fseek(fp2, l + 1, SEEK_SET);
+  //   }
+  // }
+
+  // fclose(input_file);
+  // fclose(record_file);
+  // // fclose(fp3);
+  // printf("\n");
+  // // fclose(fp5);
 }
